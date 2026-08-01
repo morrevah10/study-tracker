@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -554,7 +555,7 @@ function App() {
       {view.type === "semesters" && <SemestersView data={data} onOpen={(id) => setView({ type: "semester", id })} onAdd={() => setModal({ kind: "semester-add" })} />}
       {view.type === "semester" && <SemesterView semesterId={view.id} data={data} setView={setView} setModal={setModal} toggleTask={toggleTask} addAssessment={addAssessment} deleteTask={deleteTask} />}
       {view.type === "course" && <CourseView courseId={view.id} data={data} setView={setView} setModal={setModal} toggleTask={toggleTask} addAssessment={addAssessment} deleteTask={deleteTask} addLessonsBulk={addLessonsBulk} deleteAllLessonsInCourse={deleteAllLessonsInCourse} addStatusOption={addStatusOption} renameStatusOption={renameStatusOption} deleteStatusOption={deleteStatusOption} addProjectLog={addProjectLog} deleteProjectLog={deleteProjectLog} />}
-      {view.type === "lesson" && <LessonView lessonId={view.id} data={data} setView={setView} updateLesson={updateLesson} deleteLesson={deleteLesson} />}
+      {view.type === "lesson" && <LessonView lessonId={view.id} data={data} setView={setView} setModal={setModal} updateLesson={updateLesson} deleteLesson={deleteLesson} />}
 
       {modal?.kind === "semester-add" && (
         <FormModal title="הוספת סמסטר" fields={[{ key: "name", label: "שם הסמסטר", type: "text" }, { key: "startDate", label: "תאריך התחלה", type: "date" }, { key: "endDate", label: "תאריך סיום", type: "date" }, { key: "status", label: "סטטוס", type: "select", options: SEMESTER_STATUS }, { key: "notes", label: "הערות כלליות", type: "textarea" }]}
@@ -574,6 +575,10 @@ function App() {
       {modal?.kind === "lesson-add" && (
         <FormModal title="הוספת שיעור" fields={[{ key: "lessonNumber", label: "מספר שיעור", type: "number" }, { key: "date", label: "תאריך", type: "date" }, { key: "startTime", label: "שעת התחלה", type: "time" }, { key: "endTime", label: "שעת סיום", type: "time" }, { key: "title", label: "נושא השיעור", type: "text" }]}
           initial={{ lessonNumber: modal.payload.nextNumber, date: "", startTime: "", endTime: "", title: "" }} onCancel={() => setModal(null)} onSave={(vals) => { addLesson(modal.payload.courseId, { ...vals, lessonNumber: Number(vals.lessonNumber) }); setModal(null); }} />
+      )}
+      {modal?.kind === "lesson-edit" && (
+        <FormModal title="עריכת שיעור" fields={[{ key: "lessonNumber", label: "מספר שיעור", type: "number" }, { key: "date", label: "תאריך", type: "date" }, { key: "startTime", label: "שעת התחלה", type: "time" }, { key: "endTime", label: "שעת סיום", type: "time" }, { key: "title", label: "נושא השיעור", type: "text" }]}
+          initial={modal.payload} onCancel={() => setModal(null)} onSave={(vals) => { updateLesson(modal.payload.id, { ...vals, lessonNumber: Number(vals.lessonNumber) }); setModal(null); }} />
       )}
       {modal?.kind === "task-add" && (
         <FormModal title="הוספת משימה" fields={taskFields(data.courses)} initial={{ title: "", courseId: modal.payload.courseId || (data.courses[0]?.id || ""), description: "", dueDate: "", status: TASK_STATUS[0], priority: TASK_PRIORITY[1], notes: "" }}
@@ -914,7 +919,7 @@ function ProjectLog({ project, onAdd, onDelete }) {
   );
 }
 
-function LessonView({ lessonId, data, setView, updateLesson, deleteLesson }) {
+function LessonView({ lessonId, data, setView, setModal, updateLesson, deleteLesson }) {
   const lesson = data.lessons.find((l) => l.id === lessonId);
   if (!lesson) return <div>שיעור לא נמצא.</div>;
   const course = data.courses.find((c) => c.id === lesson.courseId);
@@ -938,7 +943,10 @@ function LessonView({ lessonId, data, setView, updateLesson, deleteLesson }) {
             </select>
           </div>
         </div>
-        <div style={{ marginTop: 14 }}><Button variant="danger" onClick={() => { deleteLesson(lesson.id); setView({ type: "course", id: course.id }); }}>🗑 מחיקת שיעור</Button></div>
+        <div style={{ marginTop: 14, display: "flex", gap: 8 }}>
+          <Button variant="ghost" onClick={() => setModal({ kind: "lesson-edit", payload: lesson })}>✎ עריכת פרטי שיעור</Button>
+          <Button variant="danger" onClick={() => { deleteLesson(lesson.id); setView({ type: "course", id: course.id }); }}>🗑 מחיקת שיעור</Button>
+        </div>
       </Card>
 
       <Card>
